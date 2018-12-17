@@ -189,6 +189,7 @@ func init() {
 		accountCommand,
 		walletCommand,
 		// See consolecmd.go:
+		//进入console 或者attach
 		consoleCommand,
 		attachCommand,
 		javascriptCommand,
@@ -266,10 +267,12 @@ func geth(ctx *cli.Context) error {
 	if args := ctx.Args(); len(args) > 0 {
 		return fmt.Errorf("invalid command: %q", args[0])
 	}
-	//创建一个node
+	//创建一个node的配置
 	node := makeFullNode(ctx)
 
 	startNode(ctx, node)
+
+	//主线程进入阻塞状态，保持进程不退出，直到从channel中收到stop消息。
 	node.Wait()
 	return nil
 }
@@ -336,6 +339,7 @@ func startNode(ctx *cli.Context, stack *node.Node) {
 		}
 	}()
 	// Start auxiliary services if enabled
+
 	if ctx.GlobalBool(utils.MiningEnabledFlag.Name) || ctx.GlobalBool(utils.DeveloperFlag.Name) {
 		// Mining only makes sense if a full Ethereum node is running
 		if ctx.GlobalString(utils.SyncModeFlag.Name) == "light" {

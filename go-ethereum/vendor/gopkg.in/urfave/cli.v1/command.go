@@ -207,6 +207,7 @@ func (c Command) Run(ctx *Context) (err error) {
 		c.Action = helpSubcommand.Action
 	}
 
+	//回到 HandleAction
 	err = HandleAction(c.Action, context)
 
 	if err != nil {

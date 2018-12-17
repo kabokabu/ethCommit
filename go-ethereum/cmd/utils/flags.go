@@ -1273,6 +1273,8 @@ func SetDashboardConfig(ctx *cli.Context, cfg *dashboard.Config) {
 // RegisterEthService adds an Ethereum client to the stack.
 func RegisterEthService(stack *node.Node, cfg *eth.Config) {
 	var err error
+	//这里只是注册，具体要等到启动结点的时候才真正调用构造函数创建Service。
+	//其实就是把Service的构造函数放进结点的serviceFuncs数组。
 	// 如果同步模式是轻量级的同步模式。 那么启动轻量级的客户端。
 	if cfg.SyncMode == downloader.LightSync {
 		err = stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {

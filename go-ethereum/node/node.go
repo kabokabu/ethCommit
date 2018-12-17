@@ -143,6 +143,7 @@ func (n *Node) Start() error {
 	if n.server != nil {
 		return ErrNodeRunning
 	}
+	//判断datadir是否开启
 	if err := n.openDataDir(); err != nil {
 		return err
 	}
@@ -162,11 +163,14 @@ func (n *Node) Start() error {
 	if n.serverConfig.NodeDatabase == "" {
 		n.serverConfig.NodeDatabase = n.config.NodeDB()
 	}
+	//创建了的p2p.Server实例
 	running := &p2p.Server{Config: n.serverConfig}
 	n.log.Info("Starting peer-to-peer node", "instance", n.serverConfig.Name)
 
 	// Otherwise copy and specialize the P2P configuration
+	//创建Service
 	services := make(map[reflect.Type]Service)
+	//遍历之前配置  注册的serviceFuncs
 	for _, constructor := range n.serviceFuncs {
 		// Create a new context for the particular service
 		ctx := &ServiceContext{
@@ -193,10 +197,12 @@ func (n *Node) Start() error {
 	for _, service := range services {
 		running.Protocols = append(running.Protocols, service.Protocols()...)
 	}
+	//启动P2P server
 	if err := running.Start(); err != nil {
 		return convertFileLockError(err)
 	}
 	// Start each of the services
+	//启动Service
 	started := []reflect.Type{}
 	for kind, service := range services {
 		// Start the next service, stopping all previous upon failure
@@ -211,7 +217,7 @@ func (n *Node) Start() error {
 		// Mark the service started for potential cleanup
 		started = append(started, kind)
 	}
-	// Lastly start the configured RPC interfaces
+	// Lastly start the configured RPC interfaces 最后启动RPC服务
 	if err := n.startRPC(services); err != nil {
 		for _, service := range services {
 			service.Stop()

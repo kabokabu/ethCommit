@@ -451,6 +451,7 @@ func (srv *Server) Start() (err error) {
 			return err
 		}
 	}
+	//UDP  监听 发现节点表
 	if err := srv.setupDiscovery(); err != nil {
 		return err
 	}
@@ -458,6 +459,7 @@ func (srv *Server) Start() (err error) {
 	dynPeers := srv.maxDialedConns()
 	dialer := newDialState(srv.localnode.ID(), srv.StaticNodes, srv.BootstrapNodes, srv.ntab, dynPeers, srv.NetRestrict)
 	srv.loopWG.Add(1)
+	// 启动新线程发起TCP连接请求
 	go srv.run(dialer)
 	return nil
 }
@@ -508,6 +510,7 @@ func (srv *Server) setupLocalNode() error {
 }
 
 func (srv *Server) setupDiscovery() error {
+	// 侦听UDP端口（用于结点发现）
 	if srv.NoDiscovery && !srv.DiscoveryV5 {
 		return nil
 	}
@@ -529,6 +532,7 @@ func (srv *Server) setupDiscovery() error {
 	}
 	srv.localnode.SetFallbackUDP(realaddr.Port)
 
+	// 发起UDP请求获取结点表（内部会启动goroutine）ListenUDP
 	// Discovery V4
 	var unhandled chan discover.ReadPacket
 	var sconn *sharedUDPConn
@@ -543,6 +547,7 @@ func (srv *Server) setupDiscovery() error {
 			Bootnodes:   srv.BootstrapNodes,
 			Unhandled:   unhandled,
 		}
+
 		ntab, err := discover.ListenUDP(conn, srv.localnode, cfg)
 		if err != nil {
 			return err
